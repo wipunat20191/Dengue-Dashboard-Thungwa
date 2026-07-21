@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard สถานการณ์โรคไข้เลือดออก อ.ทุ่งหว้า (พร้อมระบบจัดการ)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #f1f5f9;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .pulse-ring { animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            80% { transform: scale(1.5); opacity: 0; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        /* Custom modal transition */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: all 0.3s ease-out; }
+        .modal-exit { opacity: 1; transform: scale(1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: all 0.2s ease-in; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col relative">
+
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="bg-red-50 p-2 rounded-lg relative">
+                        <svg class="w-6 h-6 text-red-600 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <div class="absolute inset-0 bg-red-400 rounded-lg pulse-ring"></div>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-slate-800 leading-tight">ระบบเฝ้าระวังโรคไข้เลือดออก</h1>
+                        <p class="text-xs text-slate-500">อำเภอทุ่งหว้า จังหวัดสตูล</p>
+                    </div>
+                </div>
+                <div class="text-right hidden sm:flex items-center gap-4">
+                    <div>
+                        <div class="text-sm font-medium text-slate-800" id="header-date">กำลังโหลดข้อมูล...</div>
+                        <div class="text-xs text-slate-500 flex items-center justify-end gap-1">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span> ออนไลน์ (Real-time)
+                        </div>
+                    </div>
+                    <button id="btn-open-admin" class="ml-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        จัดการข้อมูล
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-6">
+        
+        <!-- Mobile Date & Admin -->
+        <div class="sm:hidden flex justify-between items-center mb-4">
+            <div class="inline-block bg-white px-4 py-2 rounded-full shadow-sm text-sm font-medium text-slate-700" id="mobile-date">
+                กำลังโหลด...
+            </div>
+            <button id="btn-open-admin-mobile" class="bg-slate-800 text-white p-2 rounded-full shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+        </div>
+
+        <!-- KPI Cards -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-card rounded-2xl p-5 border-l-4 border-l-red-500 flex items-center justify-between group">
+                <div>
+                    <p class="text-sm font-medium text-slate-500 mb-1">ผู้ป่วยสะสม</p>
+                    <h2 class="text-3xl font-bold text-slate-800"><span class="text-red-600" id="val-total">-</span> <span class="text-base font-normal text-slate-500">ราย</span></h2>
+                </div>
+                <div class="p-3 bg-red-50 rounded-xl group-hover:bg-red-100 transition-colors">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-5 border-l-4 border-l-orange-400 flex items-center justify-between group">
+                <div>
+                    <p class="text-sm font-medium text-slate-500 mb-1">ผู้ป่วยรายใหม่</p>
+                    <h2 class="text-3xl font-bold text-slate-800"><span class="text-orange-500" id="val-new">-</span> <span class="text-base font-normal text-slate-500">ราย</span></h2>
+                </div>
+                <div class="p-3 bg-orange-50 rounded-xl group-hover:bg-orange-100 transition-colors">
+                    <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-5 border-l-4 border-l-emerald-500 flex items-center justify-between group">
+                <div>
+                    <p class="text-sm font-medium text-slate-500 mb-1">ผู้ป่วยเสียชีวิต</p>
+                    <h2 class="text-3xl font-bold text-slate-800"><span class="text-emerald-500" id="val-deaths">-</span> <span class="text-base font-normal text-slate-500">ราย</span></h2>
+                </div>
+                <div class="p-3 bg-emerald-50 rounded-xl group-hover:bg-emerald-100 transition-colors">
+                    <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-5 border-l-4 border-l-blue-500 flex items-center justify-between group">
+                <div>
+                    <p class="text-sm font-medium text-slate-500 mb-1">อัตราป่วย (ต่อแสนประชากร)</p>
+                    <h2 class="text-3xl font-bold text-blue-600" id="val-rate">-</h2>
+                </div>
+                <div class="p-3 bg-blue-50 rounded-xl group-hover:bg-blue-100 transition-colors">
+                    <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- Villages Interactive Section -->
+        <section class="relative bg-white rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-rose-500 via-red-500 to-orange-500 px-6 py-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 bg-white/20 rounded-2xl backdrop-blur-md shadow-inner">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold tracking-tight">พื้นที่เฝ้าระวังสูงสุด (รายหมู่บ้าน)</h2>
+                        <p class="text-rose-100 text-sm mt-1">คลิกเลือกตำบลด้านซ้าย เพื่อดูรายละเอียดหมู่บ้านที่พบผู้ป่วย</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row">
+                <div class="w-full md:w-1/3 lg:w-1/4 bg-slate-50/80 border-r border-slate-100 p-4 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-y-auto max-h-[400px]" id="tambon-filter-container">
+                    <!-- Injected by JS -->
+                </div>
+                
+                <div class="w-full md:w-2/3 lg:w-3/4 p-6 bg-white min-h-[300px]">
+                    <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-6 border-b border-slate-100 pb-4 gap-2">
+                        <h3 class="text-xl font-semibold text-slate-700" id="current-tambon-title">กำลังโหลด...</h3>
+                        <div class="flex items-center gap-3 text-xs font-medium text-slate-500">
+                            <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> > 4 ราย</div>
+                            <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span> 3-4 ราย</div>
+                            <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span> 1-2 ราย</div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4" id="village-detail-list">
+                        <!-- Injected by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Row -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card rounded-2xl p-6 lg:col-span-2 flex flex-col">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    ผู้ป่วยจำแนกตามกลุ่มอายุ
+                </h3>
+                <div class="flex-grow relative" style="min-height: 250px;">
+                    <canvas id="ageChart"></canvas>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-6">
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        สัดส่วนเพศ
+                    </h3>
+                    <div class="relative h-48">
+                        <canvas id="genderChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-xl"></div>
+                    <div class="relative z-10">
+                        <p class="text-indigo-100 text-sm font-medium mb-1">กลุ่มอาชีพที่พบมากที่สุด</p>
+                        <h3 class="text-3xl font-bold mb-1" id="val-occupation">นักเรียน</h3>
+                    </div>
+                    <svg class="w-12 h-12 absolute bottom-4 right-4 text-white opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path></svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tambon & School Row -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card rounded-2xl p-6 lg:col-span-2 shadow-sm border border-slate-100">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                    ภาพรวมผู้ป่วยรายตำบล
+                </h3>
+                <div class="relative h-72">
+                    <canvas id="tambonChart"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 flex flex-col shadow-sm border border-slate-100 h-full max-h-[400px]">
+                <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    สถานศึกษาที่พบผู้ป่วย
+                </h3>
+                <div class="flex-grow overflow-y-auto pr-2 space-y-3" id="school-list">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-slate-800">สำนักงานสาธารณสุขอำเภอทุ่งหว้า</p>
+                    <p class="text-sm text-slate-500">ทีมตระหนักรู้สถานการณ์ (SAT)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                <span class="font-medium text-slate-700">074-789-014</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Admin Editor Modal (Hidden by default) -->
+    <div id="admin-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" id="admin-backdrop"></div>
+        <div class="absolute inset-0 overflow-y-auto pt-10 pb-10 px-4 flex justify-center items-start">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden relative">
+                
+                <!-- Modal Header -->
+                <div class="bg-slate-800 text-white px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-6 h-6 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <h2 class="text-xl font-bold">ระบบจัดการข้อมูล Dashboard</h2>
+                    </div>
+                    <button id="btn-close-admin" class="text-slate-300 hover:text-white bg-slate-700 hover:bg-slate-600 rounded-lg p-1.5 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-6 bg-slate-50 space-y-8 max-h-[75vh] overflow-y-auto">
+                    
+                    <!-- Section 1: Overview -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">1. ข้อมูลภาพรวม (Overview)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">วันที่อัปเดตข้อมูล</label>
+                                <input type="text" id="edit-date" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="เช่น 20 กรกฎาคม 2569">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">ผู้ป่วยสะสม (ราย)</label>
+                                <input type="number" id="edit-total" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">ผู้ป่วยรายใหม่ (ราย)</label>
+                                <input type="number" id="edit-new" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">ผู้ป่วยเสียชีวิต (ราย)</label>
+                                <input type="number" id="edit-deaths" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">อัตราป่วย (ต่อแสนประชากร)</label>
+                                <input type="number" step="0.01" id="edit-rate" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">อาชีพที่พบมากที่สุด</label>
+                                <input type="text" id="edit-occupation" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Demographics -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="text-lg font-bold text-slate-800 mb-4 border-b pb-2">2. ข้อมูลประชากร (เพศ และ อายุ)</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h4 class="font-medium text-slate-700 mb-3 text-sm">เพศ</h4>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm text-slate-500 mb-1">ชาย</label>
+                                        <input type="number" id="edit-male" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm text-slate-500 mb-1">หญิง</label>
+                                        <input type="number" id="edit-female" class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none">
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-slate-700 mb-3 text-sm">ช่วงอายุ (ราย)</h4>
+                                <div class="grid grid-cols-3 gap-2" id="edit-age-container">
+                                    <!-- JS Injected Age Inputs -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Advanced JSON Editor -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-4 border-b pb-2">
+                            <h3 class="text-lg font-bold text-slate-800">3. ข้อมูลหมู่บ้านและสถานศึกษา</h3>
+                            <span class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">สำหรับผู้ดูแลระบบ</span>
+                        </div>
+                        <p class="text-sm text-slate-500 mb-3">แก้ไขโครงสร้างข้อมูลรายหมู่บ้านและสถานศึกษาในรูปแบบ JSON เพื่อความแม่นยำและรวดเร็ว</p>
+                        <textarea id="edit-json-advanced" rows="10" class="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono text-sm bg-slate-900 text-green-400 outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="bg-white border-t border-slate-200 px-6 py-4 flex justify-between items-center rounded-b-2xl">
+                    <span id="save-status" class="text-sm font-medium text-emerald-600 opacity-0 transition-opacity">✅ บันทึกข้อมูลสำเร็จ! ระบบอัปเดตเรียลไทม์แล้ว</span>
+                    <div class="flex gap-3">
+                        <button id="btn-cancel-admin" class="px-5 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-100 transition-colors">ยกเลิก</button>
+                        <button id="btn-save-admin" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-md transition-colors flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                            บันทึกข้อมูล
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase Cloud Database Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Configuration
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'dengue-thungwa-cms';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { 
+            // Dummy config will fail silently if not inside proper environment, but provides fallback
+        };
+        
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) { console.warn("Firebase not fully configured in this env"); }
+
+        // -------------------------------------------------------------
+        // INITIAL DEFAULT DATA (If database is empty)
+        // -------------------------------------------------------------
+        const defaultData = {
+            lastUpdated: "20 กรกฎาคม 2569",
+            overview: { total: 69, new: 4, deaths: 0, rate: 278.09 },
+            demographics: { 
+                gender: { male: 33, female: 36 },
+                occupation: "นักเรียน"
+            },
+            ageData: [2, 8, 16, 16, 12, 8, 4, 1, 2],
+            villages: [
+                {
+                    tambon: "ต.นาทอน", total: 30,
+                    moo: [
+                        { name: "หมู่ 4 บ้านวังตง", count: 13 },
+                        { name: "หมู่ 5 บ้านท่าศิลา", count: 7 },
+                        { name: "หมู่ 8 บ้านทุ่งใหญ่", count: 3 },
+                        { name: "หมู่ 6 บ้านท่าข้ามควาย", count: 2 },
+                        { name: "หมู่ 9 บ้านวังเจริญราษฎร์", count: 2 },
+                        { name: "หมู่ 1 บ้านนาทอน", count: 1 },
+                        { name: "หมู่ 3 บ้านช่องไทร", count: 1 },
+                        { name: "หมู่ 7 บ้านบารายี", count: 1 }
+                    ]
+                },
+                {
+                    tambon: "ต.ขอนคลาน", total: 18,
+                    moo: [
+                        { name: "หมู่ 3 ขอนคลานตะวันตก", count: 7 },
+                        { name: "หมู่ 2 ราไวใต้", count: 4 },
+                        { name: "หมู่ 8 ราไวเหนือ", count: 4 },
+                        { name: "หมู่ 1 ขอนคลานตะวันออก", count: 3 }
+                    ]
+                },
+                {
+                    tambon: "ต.ทุ่งบุหลัง", total: 8,
+                    moo: [
+                        { name: "หมู่ 2 ทุ่งสะโบ๊ะ", count: 4 },
+                        { name: "หมู่ 3 ทุ่งทะนาน", count: 2 },
+                        { name: "หมู่ 5 ทุ่งบุหลัง", count: 2 }
+                    ]
+                },
+                {
+                    tambon: "ต.ทุ่งหว้า", total: 7,
+                    moo: [
+                        { name: "หมู่ 8 บ้านควนตำเสา", count: 4 },
+                        { name: "หมู่ 1 บ้านท่าอ้อย", count: 1 },
+                        { name: "หมู่ 4 บ้านทุ่งปรือ", count: 1 },
+                        { name: "หมู่ 5 บ้านท่าขาม", count: 1 }
+                    ]
+                },
+                {
+                    tambon: "ต.ป่าแก่บ่อหิน", total: 6,
+                    moo: [
+                        { name: "หมู่ 1 ป่าแก่บ่อหิน", count: 2 },
+                        { name: "หมู่ 3 ทุ่งดินลุ่ม", count: 2 },
+                        { name: "หมู่ 7 เขาแดง", count: 2 }
+                    ]
+                }
+            ],
+            schools: [
+                { name: "โรงเรียนทุ่งหว้าวรวิทย์", count: 8, icon: "M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" },
+                { name: "โรงเรียนบ้านวังตง", count: 6, icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+                { name: "กศน./สกร.", count: 4, icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+                { name: "โรงเรียนบ้านขอนคลาน", count: 3, icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" },
+                { name: "โรงเรียนท่าศิลาบำรุงราษฎร์", count: 3, icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" },
+                { name: "โรงเรียนอัลฟุรกอนวิทยา", count: 3, icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" }
+            ]
+        };
+
+        let currentData = { ...defaultData };
+        let activeTambonGlobal = ""; // Track selected tab
+
+        // -------------------------------------------------------------
+        // CHART INSTANCES
+        // -------------------------------------------------------------
+        let ageChartObj, genderChartObj, tambonChartObj;
+        
+        Chart.defaults.font.family = "'Prompt', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        function initCharts() {
+            // Age Chart
+            const ageCtx = document.getElementById('ageChart').getContext('2d');
+            ageChartObj = new Chart(ageCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-4 ปี', '5-9 ปี', '10-14 ปี', '15-19 ปี', '20-29 ปี', '30-39 ปี', '40-49 ปี', '50-59 ปี', '60+'],
+                    datasets: [{
+                        label: 'ผู้ป่วย (ราย)', data: [],
+                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                        hoverBackgroundColor: 'rgba(79, 70, 229, 1)',
+                        borderRadius: 6
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Gender Chart
+            const genderCtx = document.getElementById('genderChart').getContext('2d');
+            genderChartObj = new Chart(genderCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['ชาย', 'หญิง'],
+                    datasets: [{
+                        data: [], backgroundColor: ['#38bdf8', '#fb7185'],
+                        borderWidth: 0, cutout: '70%'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // Tambon Chart
+            const tambonCtx = document.getElementById('tambonChart').getContext('2d');
+            tambonChartObj = new Chart(tambonCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{ axis: 'y', data: [], backgroundColor: [], borderRadius: 6 }]
+                },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+        }
+
+        function renderDashboard(data) {
+            // Update Text Elements
+            document.getElementById('header-date').innerText = `ข้อมูล ณ วันที่ ${data.lastUpdated}`;
+            document.getElementById('mobile-date').innerText = `อัปเดต: ${data.lastUpdated}`;
+            document.getElementById('val-total').innerText = data.overview.total;
+            document.getElementById('val-new').innerText = `+${data.overview.new}`;
+            document.getElementById('val-deaths').innerText = data.overview.deaths;
+            document.getElementById('val-rate').innerText = data.overview.rate;
+            document.getElementById('val-occupation').innerText = data.demographics.occupation;
+
+            // Update Charts Data
+            ageChartObj.data.datasets[0].data = data.ageData;
+            ageChartObj.update();
+
+            genderChartObj.data.datasets[0].data = [data.demographics.gender.male, data.demographics.gender.female];
+            genderChartObj.update();
+
+            // Tambon Chart Data
+            const tambonLabels = data.villages.map(v => v.tambon.replace('ต.', ''));
+            const tambonVals = data.villages.map(v => v.total);
+            const tambonColors = tambonVals.map(val => val > 15 ? 'rgba(239, 68, 68, 0.85)' : 'rgba(251, 146, 60, 0.85)');
+            
+            tambonChartObj.data.labels = tambonLabels;
+            tambonChartObj.data.datasets[0].data = tambonVals;
+            tambonChartObj.data.datasets[0].backgroundColor = tambonColors;
+            tambonChartObj.update();
+
+            // Render Schools
+            const schoolList = document.getElementById('school-list');
+            schoolList.innerHTML = '';
+            data.schools.forEach(school => {
+                let intensityClass = school.count >= 5 ? 'bg-amber-50/50 border-amber-200' : 'bg-white border-slate-100';
+                let numColor = school.count >= 5 ? 'text-amber-700 bg-amber-100' : 'text-slate-600 bg-slate-100';
+                schoolList.innerHTML += `
+                <div class="flex items-center justify-between p-3 rounded-xl border ${intensityClass} hover:shadow-md transition-all group">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="p-2 bg-white rounded-lg shadow-sm border border-slate-50 flex-shrink-0">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${school.icon || 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'}"></path>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-slate-700 truncate">${school.name}</span>
+                    </div>
+                    <div class="px-2.5 py-1 rounded-md text-xs font-bold flex-shrink-0 ${numColor}">${school.count} ราย</div>
+                </div>`;
+            });
+
+            // Maintain selected tambon or select first
+            if(!activeTambonGlobal || !data.villages.find(v => v.tambon === activeTambonGlobal)){
+                activeTambonGlobal = data.villages[0]?.tambon || "";
+            }
+            renderTambonFilters(data.villages);
+            renderVillages(data.villages, activeTambonGlobal);
+        }
+
+        function renderTambonFilters(villagesData) {
+            const container = document.getElementById('tambon-filter-container');
+            container.innerHTML = '';
+            villagesData.forEach(t => {
+                const isActive = t.tambon === activeTambonGlobal;
+                const btnClass = isActive ? 'bg-white border-rose-500 shadow-sm' : 'bg-transparent border-transparent hover:bg-slate-200/50 text-slate-600';
+                const badgeClass = isActive ? 'bg-rose-100 text-rose-700' : (t.total > 15 ? 'bg-red-100 text-red-600' : 'bg-slate-200 text-slate-600');
+                const titleClass = isActive ? 'text-rose-600 font-bold' : 'font-medium';
+                
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left px-4 py-3 border-l-4 rounded-r-xl transition-all duration-200 flex items-center justify-between flex-shrink-0 md:flex-shrink ${btnClass}`;
+                btn.innerHTML = `<span class="text-sm ${titleClass}">${t.tambon}</span> <span class="px-2.5 py-1 rounded-full text-xs font-bold ${badgeClass}">${t.total} ราย</span>`;
+                btn.onclick = () => {
+                    activeTambonGlobal = t.tambon;
+                    renderTambonFilters(villagesData);
+                    renderVillages(villagesData, t.tambon);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderVillages(villagesData, tambonName) {
+            document.getElementById('current-tambon-title').innerHTML = `ข้อมูลหมู่บ้านใน <span class="text-rose-600">${tambonName}</span>`;
+            const list = document.getElementById('village-detail-list');
+            list.innerHTML = '';
+            
+            const data = villagesData.find(t => t.tambon === tambonName);
+            if (!data) return;
+
+            const sortedMoo = [...data.moo].sort((a, b) => b.count - a.count);
+            sortedMoo.forEach(m => {
+                let severityClass = m.count >= 5 ? 'border-red-200 bg-gradient-to-br from-red-50 to-white' : (m.count >= 3 ? 'border-orange-200 bg-gradient-to-br from-orange-50 to-white' : 'border-slate-200 bg-white');
+                let iconColor = m.count >= 5 ? 'text-red-500' : (m.count >= 3 ? 'text-orange-500' : 'text-slate-400');
+                
+                list.innerHTML += `
+                    <div class="relative overflow-hidden flex flex-col p-4 rounded-xl border ${severityClass} hover:shadow-md transition-all group">
+                        <div class="flex justify-between items-center z-10">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 rounded-lg bg-white shadow-sm border border-slate-100 group-hover:scale-110 transition-transform">
+                                    <svg class="w-5 h-5 ${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                </div>
+                                <span class="text-sm font-bold text-slate-700">${m.name}</span>
+                            </div>
+                            <div class="text-right flex items-baseline gap-1">
+                                <span class="text-2xl font-extrabold ${iconColor}">${m.count}</span>
+                                <span class="text-xs font-medium text-slate-500">ราย</span>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        
+        const modal = document.getElementById('admin-modal');
+        
+        function openAdmin() {
+            // Populate inputs with currentData
+            document.getElementById('edit-date').value = currentData.lastUpdated;
+            document.getElementById('edit-total').value = currentData.overview.total;
+            document.getElementById('edit-new').value = currentData.overview.new;
+            document.getElementById('edit-deaths').value = currentData.overview.deaths;
+            document.getElementById('edit-rate').value = currentData.overview.rate;
+            document.getElementById('edit-occupation').value = currentData.demographics.occupation;
+            document.getElementById('edit-male').value = currentData.demographics.gender.male;
+            document.getElementById('edit-female').value = currentData.demographics.gender.female;
+            
+            // Age inputs
+            const ageLabels = ['0-4 ปี', '5-9 ปี', '10-14 ปี', '15-19 ปี', '20-29 ปี', '30-39 ปี', '40-49 ปี', '50-59 ปี', '60+'];
+            const ageContainer = document.getElementById('edit-age-container');
+            ageContainer.innerHTML = '';
+            ageLabels.forEach((label, i) => {
+                ageContainer.innerHTML += `
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">${label}</label>
+                    <input type="number" id="edit-age-${i}" value="${currentData.ageData[i]}" class="w-full px-2 py-1 text-sm border border-slate-300 rounded-lg outline-none">
+                </div>`;
+            });
+
+            // JSON Editor for Advanced Arrays
+            const advancedData = { villages: currentData.villages, schools: currentData.schools };
+            document.getElementById('edit-json-advanced').value = JSON.stringify(advancedData, null, 2);
+
+            modal.classList.remove('hidden');
+            modal.classList.add('modal-enter-active');
+        }
+
+        function closeAdmin() {
+            modal.classList.remove('modal-enter-active');
+            modal.classList.add('hidden');
+        }
+
+        async function saveAdmin() {
+            const btnSave = document.getElementById('btn-save-admin');
+            btnSave.innerText = "กำลังบันทึก...";
+            btnSave.disabled = true;
+
+            try {
+                // Parse basic inputs
+                currentData.lastUpdated = document.getElementById('edit-date').value;
+                currentData.overview.total = parseInt(document.getElementById('edit-total').value) || 0;
+                currentData.overview.new = parseInt(document.getElementById('edit-new').value) || 0;
+                currentData.overview.deaths = parseInt(document.getElementById('edit-deaths').value) || 0;
+                currentData.overview.rate = parseFloat(document.getElementById('edit-rate').value) || 0;
+                currentData.demographics.occupation = document.getElementById('edit-occupation').value;
+                currentData.demographics.gender.male = parseInt(document.getElementById('edit-male').value) || 0;
+                currentData.demographics.gender.female = parseInt(document.getElementById('edit-female').value) || 0;
+
+                // Parse Age
+                for(let i=0; i<9; i++) {
+                    currentData.ageData[i] = parseInt(document.getElementById(`edit-age-${i}`).value) || 0;
+                }
+
+                // Parse Advanced JSON
+                const advJsonStr = document.getElementById('edit-json-advanced').value;
+                const advParsed = JSON.parse(advJsonStr);
+                currentData.villages = advParsed.villages;
+                currentData.schools = advParsed.schools;
+
+                // Save to Firestore Rule 1 path
+                if (auth && auth.currentUser) {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboard', 'latest_report');
+                    await setDoc(docRef, currentData);
+                } else {
+                    // Fallback local update if Firebase fails
+                    renderDashboard(currentData);
+                }
+
+                // Show success toast
+                const statusStr = document.getElementById('save-status');
+                statusStr.style.opacity = '1';
+                setTimeout(() => { statusStr.style.opacity = '0'; }, 3000);
+
+            } catch (e) {
+                alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล (ตรวจสอบรูปแบบ JSON): " + e.message);
+            } finally {
+                btnSave.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> บันทึกข้อมูล`;
+                btnSave.disabled = false;
+                setTimeout(closeAdmin, 1000);
+            }
+        }
+
+        // Attach Event Listeners
+        document.getElementById('btn-open-admin').addEventListener('click', openAdmin);
+        document.getElementById('btn-open-admin-mobile').addEventListener('click', openAdmin);
+        document.getElementById('btn-close-admin').addEventListener('click', closeAdmin);
+        document.getElementById('btn-cancel-admin').addEventListener('click', closeAdmin);
+        document.getElementById('admin-backdrop').addEventListener('click', closeAdmin);
+        document.getElementById('btn-save-admin').addEventListener('click', saveAdmin);
+
+        async function initFirebase() {
+            if(!auth) {
+                // Local fallback mode without DB
+                initCharts();
+                renderDashboard(currentData);
+                return;
+            }
+
+            try {
+                // Rule 3: Auth Before Queries
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                if (!auth.currentUser) return;
+
+                initCharts(); // Setup empty charts
+
+                // Rule 1: Strict Paths
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboard', 'latest_report');
+                
+                // Read once to seed if empty
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) {
+                    await setDoc(docRef, currentData); // Seed with default
+                }
+
+                // Listen for real-time updates
+                onSnapshot(docRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        currentData = snapshot.data();
+                        renderDashboard(currentData);
+                    }
+                }, (error) => {
+                    console.error("Error fetching data:", error);
+                });
+
+            } catch (error) {
+                console.error("Firebase init failed, using local data", error);
+                initCharts();
+                renderDashboard(currentData);
+            }
+        }
+
+        // Start App
+        window.onload = initFirebase;
+
+    </script>
+</body>
+</html>
